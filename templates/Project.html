@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>To Do List</title>
+<style>
+	body {
+		background-color:#4286f4;
+	}
+	.heading {
+		background-color:#4286f4;
+	    color:#FFFF99;
+	    margin:0px;
+	    font-size:300%;
+		padding-top: 10px;
+		height: 200px;
+		text-align: center;
+	}
+	.dataEnter {
+		color: black;
+		margin-top: 10px;
+		margin-bottom: 10px;
+		font-size: 25px;
+		padding: 0px;
+		font-family: monospace;
+		border-radius: 8px;
+	}
+  .pressButton {
+    color:#FFFF99;
+    font-size: 30px;
+    height: 100px;
+    width: 100px;
+    cursor: pointer;
+	transition: 0.3s;
+	margin: 20px;
+	font-family: monospace;
+  }
+  .pressButton:hover {
+		color: #f2926f;
+	}
+	.content {
+		background-color:#4186f4;
+		text-align: center;
+		height: 100%;
+	}
+	ul {
+		list-style: none;
+	}
+	ul li {
+		background-color: #68a5d6;
+		padding: 5px;
+		width: 500px;
+		border: 1px solid black;
+		transition: .5s;
+		margin: 2px auto;
+	}
+	ul li:hover {
+		background-color: #466b89;
+	}
+</style>
+</head>
+	<body>
+
+		<div class = "heading">
+			<h1>To Do List</h1>
+		</div>
+		<div class = "content">
+			<input class = "dataEnter" type = "text" id = "enter" placeholder = "Enter Task...">
+    	<span onclick = "newTask()" class = "pressButton"> Add a Task </span>
+		<span onclick = "instructions()" class = "pressButton"> Instructions </span>
+		<span onclick = "updateSpecificItem()" class = "pressButton"> create update </span>
+			<div class = "taskList">
+				<ul id ="toDoList">
+				</ul>
+			</div>
+		</div>
+		<script>
+			var list = fetch("http://localhost:5000/todo/read", {
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				method: 'GET',
+			}).then(function(list) {
+				list.text().then(function resp(theList) {
+					items = JSON.parse(theList);
+					var listItems = document.getElementById("toDoList");
+					for (var i = 0; i < items.length; i++){
+						var entry = document.createElement("li");
+						listItems.appendChild(entry);
+						entry.innerHTML = items[i];
+					}
+				})
+			})
+			var listItems = document.getElementById("toDoList");
+			listItems.addEventListener("click", deleteItem);
+			function updateSpecificItem(){
+				var original = prompt("Enter original item");
+				var replacement = prompt("Enter replacement item");
+				var listItems = document.getElementById("toDoList").childNodes;
+				for (var i = 1; i < listItems.length; i++){
+					if (listItems[i].textContent == original){
+						listItems[i].innerHTML = replacement;
+						break;
+					}
+				}
+				fetch("http://localhost:5000/todo/update",{
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					method: 'PUT',
+					body: JSON.stringify(
+					{
+					originalTask: original,
+					replacementTask: replacement
+					}
+					)
+				})
+			}
+			function deleteItem(item){
+				var deleteText = item.target.textContent;
+				fetch("http://localhost:5000/todo/delete", {
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					method: 'Delete',
+					body: JSON.stringify(
+					{
+					deleteItem: deleteText
+					}
+					)
+				})
+				item.target.style.display = "none";
+			}
+			function newTask(){
+				var text = document.getElementById("enter");
+				if (text.value == "")
+					alert("Give an entry");
+				else{
+				fetch("http://localhost:5000/todo/create",{
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					method: 'POST',
+					body: JSON.stringify(
+					{
+					newTask: text.value
+					}
+					)
+				})
+				var entry = document.createElement("li");
+				var listItems = document.getElementById("toDoList");
+				listItems.appendChild(entry);
+				entry.innerHTML = text.value;
+				document.getElementById("enter").value = "";
+			}
+			}
+			function instructions(){
+				alert("Enter task and press Add a Task to enter a new task.\nClick on the task itself to delete it.");
+			}
+		</script>
+	</body>
+</html>
